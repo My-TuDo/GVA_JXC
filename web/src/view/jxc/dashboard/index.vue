@@ -1,5 +1,11 @@
 <template>
   <div>
+    <!-- AI 智能助手悬浮入口 -->
+    <button class="ai-fab" title="AI 智能助手" @click="aiVisible = true">
+      <svg-icon local-icon="sparkles-gva" class="h-6 w-6" />
+    </button>
+    <AiAssistant v-model="aiVisible" initial-mode="analyze" />
+
     <!-- 历史销售统计 -->
     <el-card shadow="never" class="mb-4">
       <template #header>
@@ -103,11 +109,13 @@ import {
   getDashboardOverview, getDashboardTrend, getDashboardTop,
   getDashboardStockAlert, getDashboardCategory, getSalesHistory,
 } from '@/api/jxc/dashboard'
+import AiAssistant from '../ai/AiAssistant.vue'
 
 const overview = ref([])
 const stockAlerts = ref([])
 const trendDays = 14
 const topLimit = 10
+const aiVisible = ref(false)
 
 // 历史销售统计
 const historyRange = ref([])
@@ -196,4 +204,25 @@ onMounted(loadAll)
 .history-tools { display: flex; align-items: center; }
 .ml-2 { margin-left: 8px; }
 .col-amount { color: #e6a23c; }
+/* AI 悬浮按钮 */
+.ai-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--el-color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.ai-fab:hover { transform: scale(1.08); }
+.ai-fab:active { transform: scale(0.95); }
 </style>

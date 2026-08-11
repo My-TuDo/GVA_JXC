@@ -37,6 +37,9 @@ type Server struct {
 	// MCP配置
 	MCP MCP `mapstructure:"mcp" json:"mcp" yaml:"mcp"`
 
+	// AI 智能助手配置
+	AI AI `mapstructure:"ai" json:"ai" yaml:"ai"`
+
 	// 应用身份（日志静态字段 node/app_id/env）
 	App App `mapstructure:"app" json:"app" yaml:"app"`
 }
