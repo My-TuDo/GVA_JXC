@@ -341,7 +341,7 @@
       <span v-if="posAutoCount > 0" class="pos-session-chip count">
         <el-icon><ShoppingCart /></el-icon> 已自动加入 {{ posAutoCount }} 件
       </span>
-      <el-button @click="aiVisible = true">
+      <el-button v-if="hasAiMenu" @click="aiVisible = true">
         <svg-icon local-icon="sparkles-gva" class="mr-1 h-4 w-4" />AI 助手
       </el-button>
       <el-button :icon="Setting" @click="posSettingsVisible = true">收银台设置</el-button>
@@ -388,12 +388,17 @@ import { getSalePage, getSaleDetail, getSaleRemaining } from '@/api/jxc/sale'
 import { getSkuList } from '@/api/jxc/goods'
 import { getWarehouseList, getCustomerList } from '@/api/jxc/basic'
 import { getStockPage } from '@/api/jxc/stock'
+import { menuHasName } from '@/utils/menuCheck'
+import { useRouterStore } from '@/pinia/modules/router'
 import QtyStepper from './components/QtyStepper.vue'
 import ResultDialog from './components/ResultDialog.vue'
 import AiAssistant from '../ai/AiAssistant.vue'
 
 const activeTab = ref('cash')
 const aiVisible = ref(false)
+const routerStore = useRouterStore()
+// AI 入口按菜单权限显隐（老板/店长默认有，其他角色按角色管理分配）
+const hasAiMenu = computed(() => menuHasName(routerStore.rootMenus, 'aiAssistant'))
 
 // 切 tab 时加载对应数据：换货默认显示全部商品；退款刷新原单候选
 const onTabChange = (name) => {

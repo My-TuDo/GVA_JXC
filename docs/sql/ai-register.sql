@@ -2,6 +2,8 @@
 -- AI 智能助手：sys_apis / casbin / 菜单 一次性注册（幂等可重跑）
 -- 背景：AI 助手（/jxc/ai/analyze、/jxc/ai/recommend）为新增功能，
 --       路由挂 PrivateGroup 走完整鉴权链，未注册权限前所有角色 403。
+-- 执行（Windows 下必须指定 utf8mb4，否则中文 description 报 1366 错）：
+--   mysql -h127.0.0.1 -uroot -p --default-character-set=utf8mb4 gva < ai-register.sql
 -- 矩阵：
 --   老板 888 / 店长 9001：AI 业绩分析 + 商品推荐（全库口径 + 菜单门禁）
 --   销售 9002 / 采购 9003 / 仓管 9004：不配置（默认不可用，可按需在

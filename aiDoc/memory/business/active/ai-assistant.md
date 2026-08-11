@@ -36,6 +36,8 @@
 - 防引导性语言：System Prompt 三层结构（角色/硬约束/<data> 数据隔离），硬防线 = 无写工具 + Casbin 门禁
 - 权限：默认老板 888 / 店长 9001 可用，其他角色按需在角色管理分配
 - 流式输出：前端 SSE（fetch + ReadableStream，复用 autoCode.js 风格）；后端 SSE 透传 DeepSeek 增量
+- **权限注册方式（2026-08-11 评审确定）**：回退「启动自动注册」，采用 **SQL 脚本**（`docs/sql/ai-register.sql`，与 pos 扫码枪先例一致）。原因：GVA 无启动自动写库注册权限的先例；自动注册会与「API/菜单管理」界面冲突（界面删除会被重启复活）、隐式写库难审计。GVA 的 casbin 无管理员豁免（888 也须显式授权），可手动在界面注册
+- 前端 AI 入口按钮按菜单权限显隐（`web/src/utils/menuCheck.js`），无权限角色看不到按钮
 
 ## 当前进展
 

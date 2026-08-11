@@ -1,7 +1,7 @@
 <template>
   <div>
-    <!-- AI 智能助手悬浮入口 -->
-    <button class="ai-fab" title="AI 智能助手" @click="aiVisible = true">
+    <!-- AI 智能助手悬浮入口（仅对分配了「AI 智能助手」菜单的角色显示） -->
+    <button v-if="hasAiMenu" class="ai-fab" title="AI 智能助手" @click="aiVisible = true">
       <svg-icon local-icon="sparkles-gva" class="h-6 w-6" />
     </button>
     <AiAssistant v-model="aiVisible" initial-mode="analyze" />
@@ -96,13 +96,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import VCharts from 'vue-echarts'
 // vue-echarts 7 为按需版，必须显式注册渲染器与图表组件
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart, BarChart, PieChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
+import { menuHasName } from '@/utils/menuCheck'
+import { useRouterStore } from '@/pinia/modules/router'
 
 use([CanvasRenderer, LineChart, BarChart, PieChart, GridComponent, TooltipComponent, LegendComponent])
 import {
@@ -116,6 +118,9 @@ const stockAlerts = ref([])
 const trendDays = 14
 const topLimit = 10
 const aiVisible = ref(false)
+const routerStore = useRouterStore()
+// AI 入口按菜单权限显隐（老板/店长默认有，其他角色按角色管理分配）
+const hasAiMenu = computed(() => menuHasName(routerStore.rootMenus, 'aiAssistant'))
 
 // 历史销售统计
 const historyRange = ref([])
