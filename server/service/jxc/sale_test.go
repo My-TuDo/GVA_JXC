@@ -2,6 +2,7 @@ package jxc
 
 import (
 	"context"
+	"strings"
 	"errors"
 	"testing"
 	"time"
@@ -415,7 +416,7 @@ func TestSale_StockErrors(t *testing.T) {
 // TestGetSalePage_Empty 测试空库分页提前返回
 func TestGetSalePage_Empty(t *testing.T) {
 	saleTestDB(t)
-	_, total, err := saleSvc.GetSalePage(context.Background(), request.PageInfo{Page: 1, PageSize: 10})
+	_, total, err := saleSvc.GetSalePage(context.Background(), jxc.SaleQuery{PageInfo: request.PageInfo{Page: 1, PageSize: 10}})
 	if err != nil || total != 0 {
 		t.Errorf("空库应返回 0, got total=%d err=%v", total, err)
 	}
@@ -430,12 +431,12 @@ func TestGetSalePage_Detail(t *testing.T) {
 	if err := saleSvc.CreateSaleOrder(context.Background(), order); err != nil {
 		t.Fatalf("创建失败: %v", err)
 	}
-	list, total, err := saleSvc.GetSalePage(context.Background(), request.PageInfo{Page: 1, PageSize: 10})
+	list, total, err := saleSvc.GetSalePage(context.Background(), jxc.SaleQuery{PageInfo: request.PageInfo{Page: 1, PageSize: 10}})
 	if err != nil || total != 1 || len(list) != 1 {
 		t.Fatalf("分页不符: total=%d list=%d err=%v", total, len(list), err)
 	}
 	// 按单号搜索
-	if _, total, err := saleSvc.GetSalePage(context.Background(), request.PageInfo{Page: 1, PageSize: 10, Keyword: order.OrderNo}); err != nil || total != 1 {
+	if _, total, err := saleSvc.GetSalePage(context.Background(), jxc.SaleQuery{PageInfo: request.PageInfo{Page: 1, PageSize: 10, Keyword: order.OrderNo}}); err != nil || total != 1 {
 		t.Fatalf("按单号搜索不符: total=%d err=%v", total, err)
 	}
 	detail, err := saleSvc.GetSaleDetail(context.Background(), order.ID)
@@ -713,5 +714,62 @@ func TestSale_ErrorBranches(t *testing.T) {
 	global.GVA_DB.Exec("DROP TABLE sale_item")
 	if _, err := saleSvc.GetRemaining(ctx, 1); err == nil {
 		t.Error("明细表缺失 GetRemaining 应报错")
+	}
+}
+// TestGetSalePage_Range 日期范围过滤（含当天，供看板历史统计下钻）
+func TestGetSalePage_Range(t *testing.T) {
+	saleTestDB(t)
+	skuID := newSaleFixture(t)
+	order := &jxc.SaleOrder{WarehouseID: 1, OrderType: jxc.SaleTypeNormal,
+		Items: []jxc.SaleItem{{SkuID: skuID, Qty: 1, Price: 15}}}
+	if err := saleSvc.CreateSaleOrder(context.Background(), order); err != nil {
+		t.Fatalf("创建失败: %v", err)
+	}
+	today := time.Now().Format("2006-01-02")
+	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+
+	// 当天范围命中
+	if _, total, err := saleSvc.GetSalePage(context.Background(), jxc.SaleQuery{PageInfo: request.PageInfo{Page: 1, PageSize: 10}, From: today, To: today}); err != nil || total != 1 {
+		t.Errorf("当天范围应命中 1 单, got total=%d err=%v", total, err)
+	}
+	// 昨天范围不命中
+	if _, total, _ := saleSvc.GetSalePage(context.Background(), jxc.SaleQuery{PageInfo: request.PageInfo{Page: 1, PageSize: 10}, From: yesterday, To: yesterday}); total != 0 {
+		t.Errorf("昨天范围应命中 0 单, got %d", total)
+	}
+	// 跨范围命中（To 含当天：右区间开区间）
+	if _, total, _ := saleSvc.GetSalePage(context.Background(), jxc.SaleQuery{PageInfo: request.PageInfo{Page: 1, PageSize: 10}, From: yesterday, To: today}); total != 1 {
+		t.Errorf("跨范围应命中 1 单, got %d", total)
+	}
+	// 仅 From 不设 To：从昨天起全部命中
+	if _, total, _ := saleSvc.GetSalePage(context.Background(), jxc.SaleQuery{PageInfo: request.PageInfo{Page: 1, PageSize: 10}, From: yesterday}); total != 1 {
+		t.Errorf("仅 From 应命中 1 单, got %d", total)
+	}
+}
+
+// TestSalesHistory_DateFormat 历史统计日期应为 yyyy-mm-dd（防御 MySQL RFC3339 截断）
+func TestSalesHistory_DateFormat(t *testing.T) {
+	saleTestDB(t)
+	skuID := newSaleFixture(t)
+	order := &jxc.SaleOrder{WarehouseID: 1, OrderType: jxc.SaleTypeNormal,
+		Items: []jxc.SaleItem{{SkuID: skuID, Qty: 1, Price: 15}}}
+	if err := saleSvc.CreateSaleOrder(context.Background(), order); err != nil {
+		t.Fatalf("创建失败: %v", err)
+	}
+	// 出库后（status=2）才进入销售统计口径
+	if err := saleSvc.ConfirmOut(context.Background(), order.ID, "t"); err != nil {
+		t.Fatalf("出库失败: %v", err)
+	}
+	ctx := context.Background()
+	dashSvc := &DashboardService{}
+	today := time.Now().Format("2006-01-02")
+
+	list, err := dashSvc.SalesHistory(ctx, today, today, "day")
+	if err != nil || len(list) != 1 {
+		t.Fatalf("当天应有 1 条统计: %+v err=%v", list, err)
+	}
+	for _, item := range list {
+		if len(item.Date) != 10 || strings.Contains(item.Date, "T") {
+			t.Errorf("日期应为 yyyy-mm-dd 纯日期, got %q", item.Date)
+		}
 	}
 }

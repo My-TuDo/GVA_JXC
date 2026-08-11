@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
-	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/jxc"
 	"gorm.io/gorm"
 )
@@ -310,11 +309,18 @@ func (s *SaleService) createSaleOrderTx(ctx context.Context, order *jxc.SaleOrde
 	})
 }
 
-// GetSalePage 分页查询销售单
-func (s *SaleService) GetSalePage(ctx context.Context, info request.PageInfo) (list []jxc.SaleOrder, total int64, err error) {
+// GetSalePage 分页查询销售单（支持 created_at 日期范围过滤，供看板历史统计下钻）
+func (s *SaleService) GetSalePage(ctx context.Context, info jxc.SaleQuery) (list []jxc.SaleOrder, total int64, err error) {
 	db := global.GVA_DB.WithContext(ctx).Model(&jxc.SaleOrder{})
 	if info.Keyword != "" {
 		db = db.Where("order_no LIKE ?", "%"+info.Keyword+"%")
+	}
+	if info.From != "" {
+		db = db.Where("created_at >= ?", info.From)
+	}
+	if info.To != "" {
+		// 含当天：右区间开区间
+		db = db.Where("created_at < ?", nextDay(info.To))
 	}
 	if err = db.Count(&total).Error; err != nil || total == 0 {
 		return

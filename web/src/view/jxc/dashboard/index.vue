@@ -60,12 +60,18 @@
           </div>
         </div>
       </template>
-      <el-table :data="historyList" border size="small" max-height="300">
-        <el-table-column label="日期" width="140" prop="date" />
+      <el-table :data="historyList" border size="small" max-height="300" class="history-table" @row-click="openHistoryOrders">
+        <el-table-column label="日期" width="140">
+          <template #default="{ row }">{{ fmtDate(row.date) }}</template>
+        </el-table-column>
         <el-table-column label="销售额" align="right">
           <template #default="{ row }"><b class="col-amount">¥ {{ row.sales.toFixed(2) }}</b></template>
         </el-table-column>
-        <el-table-column label="订单数" width="100" align="right" prop="orders" />
+        <el-table-column label="订单数" width="110" align="right">
+          <template #default="{ row }">
+            <span class="history-orders-link">{{ row.orders }} 单 ›</span>
+          </template>
+        </el-table-column>
         <el-table-column label="毛利" align="right">
           <template #default="{ row }">
             <span :style="{ color: row.profit >= 0 ? '#67c23a' : '#f56c6c' }">¥ {{ row.profit.toFixed(2) }}</span>
@@ -79,6 +85,58 @@
       </el-table>
       <el-empty v-if="!historyList.length" description="选择日期范围查看历史销售" :image-size="60" />
     </el-card>
+
+    <!-- 历史订单下钻弹窗：点某日/月统计行 → 该范围销售订单 -->
+    <el-dialog v-model="historyOrdersVisible" :title="historyOrdersTitle" width="720px" append-to-body>
+      <el-table :data="historyOrders" border size="small" v-loading="historyOrdersLoading" class="history-table" @row-click="openOrderDetail">
+        <el-table-column label="订单号" prop="orderNo" min-width="170" />
+        <el-table-column label="日期" width="120">
+          <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
+        </el-table-column>
+        <el-table-column label="客户" min-width="90">
+          <template #default="{ row }">{{ row.customer?.name || '零售' }}</template>
+        </el-table-column>
+        <el-table-column label="金额" width="110" align="right">
+          <template #default="{ row }">¥ {{ row.totalAmount.toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column label="状态" width="90">
+          <template #default="{ row }">{{ saleStatusMap[row.status] || row.status }}</template>
+        </el-table-column>
+      </el-table>
+      <el-pagination
+        v-if="historyOrdersTotal > historyOrdersPageSize"
+        class="mt-3 justify-center"
+        layout="prev, pager, next, total"
+        :total="historyOrdersTotal"
+        :page-size="historyOrdersPageSize"
+        v-model:current-page="historyOrdersPage"
+        @current-change="loadHistoryOrders"
+      />
+      <el-empty v-if="!historyOrdersLoading && !historyOrders.length" description="该时段暂无销售订单" :image-size="60" />
+    </el-dialog>
+
+    <!-- 订单详情弹窗 -->
+    <el-dialog v-model="historyOrderDetailVisible" title="订单详情" width="680px" append-to-body>
+      <template v-if="historyOrderDetail">
+        <div class="mb-2 text-sm text-gray-600 dark:text-slate-300">
+          单号 <b>{{ historyOrderDetail.orderNo }}</b> · 客户 {{ historyOrderDetail.customer?.name || '零售' }} · 状态 {{ saleStatusMap[historyOrderDetail.status] || historyOrderDetail.status }}
+        </div>
+        <el-table :data="historyOrderDetail.items || []" border size="small" max-height="320">
+          <el-table-column label="SKU" prop="skuCode" width="150" />
+          <el-table-column label="商品" prop="goodsName" min-width="120" show-overflow-tooltip />
+          <el-table-column label="规格" width="110">
+            <template #default="{ row }">{{ row.color }} / {{ row.size }}</template>
+          </el-table-column>
+          <el-table-column label="数量" width="70" align="right" prop="qty" />
+          <el-table-column label="单价" width="90" align="right">
+            <template #default="{ row }">¥ {{ row.price.toFixed(2) }}</template>
+          </el-table-column>
+          <el-table-column label="金额" width="100" align="right">
+            <template #default="{ row }">¥ {{ row.amount.toFixed(2) }}</template>
+          </el-table-column>
+        </el-table>
+      </template>
+    </el-dialog>
 
     <!-- 概览卡片 -->
     <el-row :gutter="16" class="mb-4">
@@ -145,6 +203,7 @@ import { LineChart, BarChart, PieChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import { menuHasName } from '@/utils/menuCheck'
 import { useRouterStore } from '@/pinia/modules/router'
+import { getSalePage, getSaleDetail } from '@/api/jxc/sale'
 
 use([CanvasRenderer, LineChart, BarChart, PieChart, GridComponent, TooltipComponent, LegendComponent])
 import {
@@ -189,6 +248,64 @@ const resolveHistoryRange = () => {
   const [from, to] = historyRange.value || []
   if (!from || !to) return null
   return [from, to]
+}
+
+// ===== 历史统计下钻：点行查看该日/月销售订单 =====
+const saleStatusMap = { 1: '待出库', 2: '已出库', 3: '已取消' }
+const fmtDate = (d) => String(d || '').slice(0, 10)
+
+const historyOrdersVisible = ref(false)
+const historyOrdersTitle = ref('')
+const historyOrdersRange = ref(null)
+const historyOrders = ref([])
+const historyOrdersTotal = ref(0)
+const historyOrdersPage = ref(1)
+const historyOrdersPageSize = ref(10)
+const historyOrdersLoading = ref(false)
+
+// 统计行 → 日期范围：日（yyyy-mm-dd）取当天，月（yyyy-mm）取整月
+const openHistoryOrders = (row) => {
+  const d = fmtDate(row.date)
+  let from, to
+  if (d.length === 7) {
+    const lastDay = new Date(Number(d.slice(0, 4)), Number(d.slice(5, 7)), 0).getDate()
+    from = `${d}-01`
+    to = `${d}-${String(lastDay).padStart(2, '0')}`
+  } else {
+    from = d
+    to = d
+  }
+  historyOrdersRange.value = [from, to]
+  historyOrdersTitle.value = `${d} 销售订单（${row.orders} 单）`
+  historyOrdersVisible.value = true
+  loadHistoryOrders(1)
+}
+
+const loadHistoryOrders = async (page = 1) => {
+  if (!historyOrdersRange.value) return
+  historyOrdersLoading.value = true
+  try {
+    const { data } = await getSalePage({
+      page,
+      pageSize: historyOrdersPageSize.value,
+      from: historyOrdersRange.value[0],
+      to: historyOrdersRange.value[1]
+    })
+    historyOrders.value = data.list || []
+    historyOrdersTotal.value = data.total || 0
+    historyOrdersPage.value = page
+  } finally {
+    historyOrdersLoading.value = false
+  }
+}
+
+// 订单详情（明细）
+const historyOrderDetailVisible = ref(false)
+const historyOrderDetail = ref(null)
+const openOrderDetail = async (row) => {
+  const { data } = await getSaleDetail(row.ID)
+  historyOrderDetail.value = data
+  historyOrderDetailVisible.value = true
 }
 
 const loadHistory = async () => {
@@ -294,4 +411,7 @@ onMounted(loadAll)
 }
 .ai-fab:hover { transform: scale(1.08); }
 .ai-fab:active { transform: scale(0.95); }
+/* 历史统计下钻：行可点击提示 */
+.history-table :deep(.el-table__row) { cursor: pointer; }
+.history-orders-link { color: var(--el-color-primary); }
 </style>
