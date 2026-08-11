@@ -274,7 +274,7 @@ func TestAnalyzeSales(t *testing.T) {
 		t.Fatalf("应发送 system+user 两条消息")
 	}
 	sys := mock.messages[0][0].Content
-	if !strings.Contains(sys, "[角色]") || !strings.Contains(sys, "[硬约束]") || !strings.Contains(sys, "<data>") {
+	if !strings.Contains(sys, "[角色]") || !strings.Contains(sys, "[安全约束]") || !strings.Contains(sys, "<data>") {
 		t.Errorf("系统提示词应包含三层结构: %s", sys[:200])
 	}
 	user := mock.messages[0][1].Content
@@ -376,6 +376,18 @@ func TestParseTimeRange_ThisMonth(t *testing.T) {
 	}
 }
 
+// TestParseTimeRange_LastWeek 上周（周一~周日，独立完整周）
+func TestParseTimeRange_LastWeek(t *testing.T) {
+	lastMonday := mondayOf(time.Now()).AddDate(0, 0, -7)
+	from, to, granularity := parseTimeRange("上周卖得怎么样")
+	if granularity != "day" {
+		t.Errorf("上周应为日粒度, got %s", granularity)
+	}
+	if from != lastMonday.Format("2006-01-02") || to != lastMonday.AddDate(0, 0, 6).Format("2006-01-02") {
+		t.Errorf("上周范围错误: %s ~ %s, 期望 %s ~ %s", from, to, lastMonday.Format("2006-01-02"), lastMonday.AddDate(0, 0, 6).Format("2006-01-02"))
+	}
+}
+
 // TestRecommendStream 验证推荐语生成提示词包含候选数据与硬约束
 func TestRecommendStream(t *testing.T) {
 	aiTestDB(t)
@@ -392,7 +404,7 @@ func TestRecommendStream(t *testing.T) {
 		t.Error("应透传上游 SSE 响应")
 	}
 	sys := mock.messages[0][0].Content
-	if !strings.Contains(sys, "[硬约束]") || !strings.Contains(sys, "SP001-RED-M") {
+	if !strings.Contains(sys, "[安全约束]") || !strings.Contains(sys, "SP001-RED-M") {
 		t.Errorf("推荐提示词应含硬约束与候选数据: %s", sys[:200])
 	}
 }

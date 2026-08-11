@@ -1,6 +1,8 @@
 package jxc
 
 import (
+	"io"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -52,5 +54,26 @@ func TestWriteSSE_Done(t *testing.T) {
 	writeSSE(c, "", "[DONE]")
 	if !strings.Contains(w.Body.String(), "data: [DONE]") {
 		t.Errorf("结束标记输出错误: %q", w.Body.String())
+	}
+}
+
+// TestForwardLLMStream_Digits SSE 透传必须完整保留数字（回归：数字丢失排查）
+func TestForwardLLMStream_Digits(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	// 模拟 DeepSeek 流式 chunk（含日期/金额/中文）
+	body := "data: {\"choices\":[{\"delta\":{\"content\":\"本月（8月1日-8月11日）\"}}]}\n\n" +
+		"data: {\"choices\":[{\"delta\":{\"content\":\"累计销售额 2026 元\"}}]}\n\n" +
+		"data: [DONE]\n\n"
+	resp := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
+
+	forwardLLMStream(c, resp)
+	out := w.Body.String()
+	for _, want := range []string{"8月1日", "8月11日", "2026", "元"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("透传输出应包含 %q, got: %s", want, out)
+		}
 	}
 }

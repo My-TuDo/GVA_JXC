@@ -124,10 +124,15 @@ const aiSSERequest = async (url, data, options = {}) => {
           const dataStr = trimmed.slice(5).trim()
           if (!dataStr || dataStr === '[DONE]') continue
           let payload = dataStr
-          try {
-            payload = JSON.parse(dataStr)
-          } catch (e) {
-            // 非 JSON 裸文本
+          // 仅命名事件（candidates/error）按 JSON 解析；message 文本永远按纯文本处理。
+          // 陷阱：DeepSeek 流式 token 切分可能让独立数字（如 "2026"、"30"）成为整行 delta，
+          // 若对它 JSON.parse 会成功并变成数字对象，导致文本被丢弃（表现为回答里数字全消失）。
+          if (pendingEvent !== 'message') {
+            try {
+              payload = JSON.parse(dataStr)
+            } catch (e) {
+              // 非 JSON 裸文本
+            }
           }
           dispatch(pendingEvent, payload)
         }
@@ -143,10 +148,13 @@ const aiSSERequest = async (url, data, options = {}) => {
         const dataStr = trimmed.slice(5).trim()
         if (dataStr && dataStr !== '[DONE]') {
           let payload = dataStr
-          try {
-            payload = JSON.parse(dataStr)
-          } catch (e) {
-            // 裸文本
+          // 同主循环：message 事件不做 JSON.parse（防止独立数字 token 被误解析丢弃）
+          if (pendingEvent !== 'message') {
+            try {
+              payload = JSON.parse(dataStr)
+            } catch (e) {
+              // 裸文本
+            }
           }
           dispatch(pendingEvent, payload)
         }
