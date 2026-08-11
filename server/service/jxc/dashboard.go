@@ -211,6 +211,10 @@ func (s *DashboardService) SalesHistory(ctx context.Context, from, to string, gr
 	if err != nil {
 		return nil, err
 	}
+	// 防御：MySQL parseTime=True 时 DATE 列可能以 RFC3339 形式落到 string（如 2026-08-04T00:00:00+08:00），统一截断
+	for i := range list {
+		list[i].Date = trimDateT(list[i].Date)
+	}
 	if granularity == "month" {
 		// 按月聚合（Go 侧完成，避免 SQL 方言差异）
 		byMonth := map[string]*SalesHistoryItem{}

@@ -17,6 +17,8 @@ func initBizRouter(routers ...*gin.RouterGroup) {
 
 	// jxc 基础资料路由
 	router.RouterGroupApp.Jxc.InitBasicRouter(privateGroup)
+	// jxc AI 智能助手路由（需登录+权限，挂 PrivateGroup）
+	router.RouterGroupApp.Jxc.InitAiRouter(privateGroup)
 	// jxc Goods 路由
 	router.RouterGroupApp.Jxc.InitGoodsRouter(publicGroup)
 	router.RouterGroupApp.Jxc.InitPurchaseRouter(publicGroup)

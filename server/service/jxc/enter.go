@@ -10,6 +10,7 @@ type ServiceGroup struct {
 	CashierService
 	DashboardService
 	PosScanService
+	AiService
 }
 
 var JxcServiceGroup = new(ServiceGroup)

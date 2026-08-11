@@ -341,6 +341,9 @@
       <span v-if="posAutoCount > 0" class="pos-session-chip count">
         <el-icon><ShoppingCart /></el-icon> 已自动加入 {{ posAutoCount }} 件
       </span>
+      <el-button v-if="hasAiMenu" @click="aiVisible = true">
+        <svg-icon local-icon="sparkles-gva" class="mr-1 h-4 w-4" />AI 助手
+      </el-button>
       <el-button :icon="Setting" @click="posSettingsVisible = true">收银台设置</el-button>
       <el-button v-if="posPollSlow" link type="warning" :icon="Refresh" @click="resumePosPolling">自动刷新已降频，点击恢复</el-button>
     </div>
@@ -369,6 +372,9 @@
 
     <!-- 成功结果弹窗 -->
     <ResultDialog v-model="doneVisible" :title="doneTitle" :lines="doneLines" />
+
+    <!-- AI 智能助手（客户需求推荐 → 候选加购） -->
+    <AiAssistant v-model="aiVisible" initial-mode="recommend" :add-to-cart="aiAddToCart" />
   </div>
 </template>
 
@@ -382,10 +388,17 @@ import { getSalePage, getSaleDetail, getSaleRemaining } from '@/api/jxc/sale'
 import { getSkuList } from '@/api/jxc/goods'
 import { getWarehouseList, getCustomerList } from '@/api/jxc/basic'
 import { getStockPage } from '@/api/jxc/stock'
+import { menuHasName } from '@/utils/menuCheck'
+import { useRouterStore } from '@/pinia/modules/router'
 import QtyStepper from './components/QtyStepper.vue'
 import ResultDialog from './components/ResultDialog.vue'
+import AiAssistant from '../ai/AiAssistant.vue'
 
 const activeTab = ref('cash')
+const aiVisible = ref(false)
+const routerStore = useRouterStore()
+// AI 入口按菜单权限显隐（老板/店长默认有，其他角色按角色管理分配）
+const hasAiMenu = computed(() => menuHasName(routerStore.rootMenus, 'aiAssistant'))
 
 // 切 tab 时加载对应数据：换货默认显示全部商品；退款刷新原单候选
 const onTabChange = (name) => {
@@ -442,6 +455,13 @@ const addToCart = (sku) => {
   const exist = cart.value.find((it) => it.skuId === sku.ID)
   if (exist) { exist.qty = Math.min(exist.qty + 1, exist.available); return }
   cart.value.push({ skuId: sku.ID, skuCode: sku.skuCode, color: sku.color, size: sku.size, salePrice: sku.salePrice || 0, qty: 1, available: sku.available })
+}
+
+// AI 推荐候选（字段为 skuId）→ 加入购物车；返回是否成功
+const aiAddToCart = (sku) => {
+  if ((sku.available || 0) <= 0) { ElMessage.warning('该 SKU 无可售库存'); return false }
+  addToCart({ ...sku, ID: sku.skuId })
+  return true
 }
 
 const clearCart = () => {

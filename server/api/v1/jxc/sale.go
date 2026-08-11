@@ -22,24 +22,26 @@ func saleOperator(c *gin.Context) string {
 
 // GetSalePage 分页查询销售单
 // @Tags     JxcSale
-// @Summary  分页查询销售单列表
+// @Summary  分页查询销售单列表（支持日期范围过滤）
 // @Security ApiKeyAuth
 // @Produce  application/json
 // @Param    page     query     int     true  "页码"
 // @Param    pageSize query     int     true  "每页条数"
 // @Param    keyword  query     string  false "搜索单号"
+// @Param    from     query     string  false "起始日期 yyyy-mm-dd（含当天）"
+// @Param    to       query     string  false "结束日期 yyyy-mm-dd（含当天）"
 // @Success  200      {object}  response.PageResult{list=[]jxc.SaleOrder,total=int64}  "销售单列表"
 // @Router   /jxc/sale/page [get]
 func (a *SaleApi) GetSalePage(c *gin.Context) {
-	var pageInfo request.PageInfo
-	_ = c.ShouldBindQuery(&pageInfo)
-	list, total, err := saleService.GetSalePage(c.Request.Context(), pageInfo)
+	var q jxc.SaleQuery
+	_ = c.ShouldBindQuery(&q)
+	list, total, err := saleService.GetSalePage(c.Request.Context(), q)
 	if err != nil {
 		global.GVA_LOG.Error("获取销售单列表失败!", zap.Error(err))
 		response.FailWithMessage("获取销售单列表失败", c)
 		return
 	}
-	response.OkWithData(response.PageResult{List: list, Total: total, Page: pageInfo.Page, PageSize: pageInfo.PageSize}, c)
+	response.OkWithData(response.PageResult{List: list, Total: total, Page: q.Page, PageSize: q.PageSize}, c)
 }
 
 // GetSaleDetail 查询销售单详情（含明细）

@@ -2,7 +2,15 @@ package jxc
 
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 )
+
+// SaleQuery 销售单分页查询（含日期范围，供看板历史统计下钻）
+type SaleQuery struct {
+	request.PageInfo
+	From string `json:"from" form:"from"` // 起始日期 yyyy-mm-dd（含当天）
+	To   string `json:"to" form:"to"`     // 结束日期 yyyy-mm-dd（含当天）
+}
 
 // 销售单状态
 const (

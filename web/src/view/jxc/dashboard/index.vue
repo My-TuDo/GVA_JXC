@@ -1,12 +1,58 @@
 <template>
   <div>
+    <!-- AI 智能助手悬浮入口（仅对分配了「AI 智能助手」菜单的角色显示） -->
+    <button v-if="hasAiMenu" class="ai-fab" title="AI 智能助手" @click="aiVisible = true">
+      <svg-icon local-icon="sparkles-gva" class="h-6 w-6" />
+    </button>
+    <AiAssistant v-model="aiVisible" initial-mode="analyze" />
+
     <!-- 历史销售统计 -->
     <el-card shadow="never" class="mb-4">
       <template #header>
         <div class="flex-between">
           <span>历史销售统计</span>
           <div class="history-tools">
-            <el-date-picker v-model="historyRange" type="daterange" value-format="YYYY-MM-DD" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" size="small" style="width: 260px" @change="loadHistory" />
+            <!-- 范围精度：年 / 月 / 日（右端点最大为今天，不允许未来） -->
+            <el-radio-group v-model="historyPrecision" size="small" @change="loadHistory">
+              <el-radio-button value="year">年</el-radio-button>
+              <el-radio-button value="month">月</el-radio-button>
+              <el-radio-button value="day">日</el-radio-button>
+            </el-radio-group>
+            <el-date-picker
+              v-if="historyPrecision === 'year'"
+              v-model="historyYear"
+              type="year"
+              value-format="YYYY"
+              placeholder="选择年份"
+              size="small"
+              class="ml-2"
+              :disabled-date="disableFuture"
+              @change="loadHistory"
+            />
+            <el-date-picker
+              v-else-if="historyPrecision === 'month'"
+              v-model="historyMonth"
+              type="month"
+              value-format="YYYY-MM"
+              placeholder="选择月份"
+              size="small"
+              class="ml-2"
+              :disabled-date="disableFuture"
+              @change="loadHistory"
+            />
+            <el-date-picker
+              v-else
+              v-model="historyRange"
+              type="daterange"
+              value-format="YYYY-MM-DD"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              size="small"
+              style="width: 260px"
+              :disabled-date="disableFuture"
+              @change="loadHistory"
+            />
             <el-radio-group v-model="historyGranularity" size="small" class="ml-2" @change="loadHistory">
               <el-radio-button value="day">按日</el-radio-button>
               <el-radio-button value="month">按月</el-radio-button>
@@ -14,12 +60,18 @@
           </div>
         </div>
       </template>
-      <el-table :data="historyList" border size="small" max-height="300">
-        <el-table-column label="日期" width="140" prop="date" />
+      <el-table :data="historyList" border size="small" max-height="300" class="history-table" @row-click="openHistoryOrders">
+        <el-table-column label="日期" width="140">
+          <template #default="{ row }">{{ fmtDate(row.date) }}</template>
+        </el-table-column>
         <el-table-column label="销售额" align="right">
           <template #default="{ row }"><b class="col-amount">¥ {{ row.sales.toFixed(2) }}</b></template>
         </el-table-column>
-        <el-table-column label="订单数" width="100" align="right" prop="orders" />
+        <el-table-column label="订单数" width="110" align="right">
+          <template #default="{ row }">
+            <span class="history-orders-link">{{ row.orders }} 单 ›</span>
+          </template>
+        </el-table-column>
         <el-table-column label="毛利" align="right">
           <template #default="{ row }">
             <span :style="{ color: row.profit >= 0 ? '#67c23a' : '#f56c6c' }">¥ {{ row.profit.toFixed(2) }}</span>
@@ -33,6 +85,58 @@
       </el-table>
       <el-empty v-if="!historyList.length" description="选择日期范围查看历史销售" :image-size="60" />
     </el-card>
+
+    <!-- 历史订单下钻弹窗：点某日/月统计行 → 该范围销售订单 -->
+    <el-dialog v-model="historyOrdersVisible" :title="historyOrdersTitle" width="720px" append-to-body>
+      <el-table :data="historyOrders" border size="small" v-loading="historyOrdersLoading" class="history-table" @row-click="openOrderDetail">
+        <el-table-column label="订单号" prop="orderNo" min-width="170" />
+        <el-table-column label="日期" width="120">
+          <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
+        </el-table-column>
+        <el-table-column label="客户" min-width="90">
+          <template #default="{ row }">{{ row.customer?.name || '零售' }}</template>
+        </el-table-column>
+        <el-table-column label="金额" width="110" align="right">
+          <template #default="{ row }">¥ {{ row.totalAmount.toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column label="状态" width="90">
+          <template #default="{ row }">{{ saleStatusMap[row.status] || row.status }}</template>
+        </el-table-column>
+      </el-table>
+      <el-pagination
+        v-if="historyOrdersTotal > historyOrdersPageSize"
+        class="mt-3 justify-center"
+        layout="prev, pager, next, total"
+        :total="historyOrdersTotal"
+        :page-size="historyOrdersPageSize"
+        v-model:current-page="historyOrdersPage"
+        @current-change="loadHistoryOrders"
+      />
+      <el-empty v-if="!historyOrdersLoading && !historyOrders.length" description="该时段暂无销售订单" :image-size="60" />
+    </el-dialog>
+
+    <!-- 订单详情弹窗 -->
+    <el-dialog v-model="historyOrderDetailVisible" title="订单详情" width="680px" append-to-body>
+      <template v-if="historyOrderDetail">
+        <div class="mb-2 text-sm text-gray-600 dark:text-slate-300">
+          单号 <b>{{ historyOrderDetail.orderNo }}</b> · 客户 {{ historyOrderDetail.customer?.name || '零售' }} · 状态 {{ saleStatusMap[historyOrderDetail.status] || historyOrderDetail.status }}
+        </div>
+        <el-table :data="historyOrderDetail.items || []" border size="small" max-height="320">
+          <el-table-column label="SKU" prop="skuCode" width="150" />
+          <el-table-column label="商品" prop="goodsName" min-width="120" show-overflow-tooltip />
+          <el-table-column label="规格" width="110">
+            <template #default="{ row }">{{ row.color }} / {{ row.size }}</template>
+          </el-table-column>
+          <el-table-column label="数量" width="70" align="right" prop="qty" />
+          <el-table-column label="单价" width="90" align="right">
+            <template #default="{ row }">¥ {{ row.price.toFixed(2) }}</template>
+          </el-table-column>
+          <el-table-column label="金额" width="100" align="right">
+            <template #default="{ row }">¥ {{ row.amount.toFixed(2) }}</template>
+          </el-table-column>
+        </el-table>
+      </template>
+    </el-dialog>
 
     <!-- 概览卡片 -->
     <el-row :gutter="16" class="mb-4">
@@ -90,38 +194,128 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import VCharts from 'vue-echarts'
 // vue-echarts 7 为按需版，必须显式注册渲染器与图表组件
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart, BarChart, PieChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
+import { menuHasName } from '@/utils/menuCheck'
+import { useRouterStore } from '@/pinia/modules/router'
+import { getSalePage, getSaleDetail } from '@/api/jxc/sale'
 
 use([CanvasRenderer, LineChart, BarChart, PieChart, GridComponent, TooltipComponent, LegendComponent])
 import {
   getDashboardOverview, getDashboardTrend, getDashboardTop,
   getDashboardStockAlert, getDashboardCategory, getSalesHistory,
 } from '@/api/jxc/dashboard'
+import AiAssistant from '../ai/AiAssistant.vue'
 
 const overview = ref([])
 const stockAlerts = ref([])
 const trendDays = 14
 const topLimit = 10
+const aiVisible = ref(false)
+const routerStore = useRouterStore()
+// AI 入口按菜单权限显隐（老板/店长默认有，其他角色按角色管理分配）
+const hasAiMenu = computed(() => menuHasName(routerStore.rootMenus, 'aiAssistant'))
 
 // 历史销售统计
-const historyRange = ref([])
+const historyPrecision = ref('day') // 范围精度：year | month | day
+const historyYear = ref('')         // 年：YYYY
+const historyMonth = ref('')        // 月：YYYY-MM
+const historyRange = ref([])        // 日：['yyyy-mm-dd','yyyy-mm-dd']
 const historyGranularity = ref('day')
 const historyList = ref([])
 const historyTotal = ref({ sales: 0, profit: 0 })
 
-const loadHistory = async () => {
+// 右端点最多到今天（不允许未来日期）
+const disableFuture = (d) => d.getTime() > Date.now()
+
+// 由精度 + 选择值计算日期范围
+const resolveHistoryRange = () => {
+  if (historyPrecision.value === 'year') {
+    if (!historyYear.value) return null
+    return [`${historyYear.value}-01-01`, `${historyYear.value}-12-31`]
+  }
+  if (historyPrecision.value === 'month') {
+    if (!historyMonth.value) return null
+    const [y, m] = historyMonth.value.split('-').map(Number)
+    const lastDay = new Date(y, m, 0).getDate()
+    return [`${historyMonth.value}-01`, `${historyMonth.value}-${String(lastDay).padStart(2, '0')}`]
+  }
   const [from, to] = historyRange.value || []
-  if (!from || !to) {
+  if (!from || !to) return null
+  return [from, to]
+}
+
+// ===== 历史统计下钻：点行查看该日/月销售订单 =====
+const saleStatusMap = { 1: '待出库', 2: '已出库', 3: '已取消' }
+const fmtDate = (d) => String(d || '').slice(0, 10)
+
+const historyOrdersVisible = ref(false)
+const historyOrdersTitle = ref('')
+const historyOrdersRange = ref(null)
+const historyOrders = ref([])
+const historyOrdersTotal = ref(0)
+const historyOrdersPage = ref(1)
+const historyOrdersPageSize = ref(10)
+const historyOrdersLoading = ref(false)
+
+// 统计行 → 日期范围：日（yyyy-mm-dd）取当天，月（yyyy-mm）取整月
+const openHistoryOrders = (row) => {
+  const d = fmtDate(row.date)
+  let from, to
+  if (d.length === 7) {
+    const lastDay = new Date(Number(d.slice(0, 4)), Number(d.slice(5, 7)), 0).getDate()
+    from = `${d}-01`
+    to = `${d}-${String(lastDay).padStart(2, '0')}`
+  } else {
+    from = d
+    to = d
+  }
+  historyOrdersRange.value = [from, to]
+  historyOrdersTitle.value = `${d} 销售订单（${row.orders} 单）`
+  historyOrdersVisible.value = true
+  loadHistoryOrders(1)
+}
+
+const loadHistoryOrders = async (page = 1) => {
+  if (!historyOrdersRange.value) return
+  historyOrdersLoading.value = true
+  try {
+    const { data } = await getSalePage({
+      page,
+      pageSize: historyOrdersPageSize.value,
+      from: historyOrdersRange.value[0],
+      to: historyOrdersRange.value[1]
+    })
+    historyOrders.value = data.list || []
+    historyOrdersTotal.value = data.total || 0
+    historyOrdersPage.value = page
+  } finally {
+    historyOrdersLoading.value = false
+  }
+}
+
+// 订单详情（明细）
+const historyOrderDetailVisible = ref(false)
+const historyOrderDetail = ref(null)
+const openOrderDetail = async (row) => {
+  const { data } = await getSaleDetail(row.ID)
+  historyOrderDetail.value = data
+  historyOrderDetailVisible.value = true
+}
+
+const loadHistory = async () => {
+  const range = resolveHistoryRange()
+  if (!range) {
     historyList.value = []
     historyTotal.value = { sales: 0, profit: 0 }
     return
   }
+  const [from, to] = range
   const { data } = await getSalesHistory(from, to, historyGranularity.value)
   historyList.value = data || []
   historyTotal.value = (data || []).reduce(
@@ -196,4 +390,28 @@ onMounted(loadAll)
 .history-tools { display: flex; align-items: center; }
 .ml-2 { margin-left: 8px; }
 .col-amount { color: #e6a23c; }
+/* AI 悬浮按钮 */
+.ai-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--el-color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.ai-fab:hover { transform: scale(1.08); }
+.ai-fab:active { transform: scale(0.95); }
+/* 历史统计下钻：行可点击提示 */
+.history-table :deep(.el-table__row) { cursor: pointer; }
+.history-orders-link { color: var(--el-color-primary); }
 </style>
