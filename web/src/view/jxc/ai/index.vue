@@ -95,7 +95,7 @@ const send = async () => {
   try {
     if (mode.value === 'analyze') {
       let raw = ''
-      await aiAnalyzeStream({ question: text, days: 30 }, {
+      await aiAnalyzeStream({ question: text, days: 0 }, {
         controller,
         onText: (t) => { raw += t; msg.displayContent = marked.parse(raw) }
       })

@@ -179,10 +179,10 @@ const send = async () => {
 
   try {
     if (mode.value === 'analyze') {
-      // 业绩分析：聚合数据在服务端完成，流式返回解读
+      // 业绩分析：后端按问题中的时间词（上月/今年/近7天等）聚合数据，流式返回解读
       let raw = ''
       await aiAnalyzeStream(
-        { question: text, days: 30 },
+        { question: text, days: 0 },
         {
           controller,
           onText: (t) => {

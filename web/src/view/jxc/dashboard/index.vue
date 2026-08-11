@@ -12,7 +12,47 @@
         <div class="flex-between">
           <span>历史销售统计</span>
           <div class="history-tools">
-            <el-date-picker v-model="historyRange" type="daterange" value-format="YYYY-MM-DD" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" size="small" style="width: 260px" @change="loadHistory" />
+            <!-- 范围精度：年 / 月 / 日（右端点最大为今天，不允许未来） -->
+            <el-radio-group v-model="historyPrecision" size="small" @change="loadHistory">
+              <el-radio-button value="year">年</el-radio-button>
+              <el-radio-button value="month">月</el-radio-button>
+              <el-radio-button value="day">日</el-radio-button>
+            </el-radio-group>
+            <el-date-picker
+              v-if="historyPrecision === 'year'"
+              v-model="historyYear"
+              type="year"
+              value-format="YYYY"
+              placeholder="选择年份"
+              size="small"
+              class="ml-2"
+              :disabled-date="disableFuture"
+              @change="loadHistory"
+            />
+            <el-date-picker
+              v-else-if="historyPrecision === 'month'"
+              v-model="historyMonth"
+              type="month"
+              value-format="YYYY-MM"
+              placeholder="选择月份"
+              size="small"
+              class="ml-2"
+              :disabled-date="disableFuture"
+              @change="loadHistory"
+            />
+            <el-date-picker
+              v-else
+              v-model="historyRange"
+              type="daterange"
+              value-format="YYYY-MM-DD"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              size="small"
+              style="width: 260px"
+              :disabled-date="disableFuture"
+              @change="loadHistory"
+            />
             <el-radio-group v-model="historyGranularity" size="small" class="ml-2" @change="loadHistory">
               <el-radio-button value="day">按日</el-radio-button>
               <el-radio-button value="month">按月</el-radio-button>
@@ -123,18 +163,42 @@ const routerStore = useRouterStore()
 const hasAiMenu = computed(() => menuHasName(routerStore.rootMenus, 'aiAssistant'))
 
 // 历史销售统计
-const historyRange = ref([])
+const historyPrecision = ref('day') // 范围精度：year | month | day
+const historyYear = ref('')         // 年：YYYY
+const historyMonth = ref('')        // 月：YYYY-MM
+const historyRange = ref([])        // 日：['yyyy-mm-dd','yyyy-mm-dd']
 const historyGranularity = ref('day')
 const historyList = ref([])
 const historyTotal = ref({ sales: 0, profit: 0 })
 
-const loadHistory = async () => {
+// 右端点最多到今天（不允许未来日期）
+const disableFuture = (d) => d.getTime() > Date.now()
+
+// 由精度 + 选择值计算日期范围
+const resolveHistoryRange = () => {
+  if (historyPrecision.value === 'year') {
+    if (!historyYear.value) return null
+    return [`${historyYear.value}-01-01`, `${historyYear.value}-12-31`]
+  }
+  if (historyPrecision.value === 'month') {
+    if (!historyMonth.value) return null
+    const [y, m] = historyMonth.value.split('-').map(Number)
+    const lastDay = new Date(y, m, 0).getDate()
+    return [`${historyMonth.value}-01`, `${historyMonth.value}-${String(lastDay).padStart(2, '0')}`]
+  }
   const [from, to] = historyRange.value || []
-  if (!from || !to) {
+  if (!from || !to) return null
+  return [from, to]
+}
+
+const loadHistory = async () => {
+  const range = resolveHistoryRange()
+  if (!range) {
     historyList.value = []
     historyTotal.value = { sales: 0, profit: 0 }
     return
   }
+  const [from, to] = range
   const { data } = await getSalesHistory(from, to, historyGranularity.value)
   historyList.value = data || []
   historyTotal.value = (data || []).reduce(

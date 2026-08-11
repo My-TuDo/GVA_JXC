@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/internal/testutil"
@@ -289,12 +290,12 @@ func TestAnalyzeSales_HasData(t *testing.T) {
 	mock := &mockLLMClient{streamResp: &http.Response{}}
 	svc := &AiService{client: mock}
 
-	if _, err := svc.AnalyzeSales(ctx, "本月卖得怎么样？", 30); err != nil {
+	if _, err := svc.AnalyzeSales(ctx, "本月卖得怎么样？", 0); err != nil {
 		t.Fatalf("分析失败: %v", err)
 	}
 	sys := mock.messages[0][0].Content
-	// <data> 中应包含聚合字段名（overview/trend30/top10/stockAlert）
-	for _, key := range []string{"overview", "trend30", "top10", "stockAlert", "generatedAt"} {
+	// <data> 中应包含聚合字段名
+	for _, key := range []string{"overview", "trend", "top", "category", "salesHistory90d", "stockAlert", "range", "generatedAt"} {
 		if !strings.Contains(sys, key) {
 			t.Errorf("<data> 应包含 %q", key)
 		}
@@ -302,6 +303,76 @@ func TestAnalyzeSales_HasData(t *testing.T) {
 	user := mock.messages[0][1].Content
 	if !strings.Contains(user, "本月卖得怎么样？") {
 		t.Errorf("用户问题应透传, got %q", user)
+	}
+}
+
+// ========== 时间范围解析（纯函数） ==========
+
+// TestParseTimeRange 上月
+func TestParseTimeRange_PrevMonth(t *testing.T) {
+	now := time.Now()
+	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	lastOfPrev := firstOfMonth.AddDate(0, 0, -1)
+	firstOfPrev := time.Date(lastOfPrev.Year(), lastOfPrev.Month(), 1, 0, 0, 0, 0, now.Location())
+
+	from, to, granularity := parseTimeRange("上个月卖得怎么样？")
+	if granularity != "month" {
+		t.Errorf("上月应为月粒度, got %s", granularity)
+	}
+	if from != firstOfPrev.Format("2006-01-02") || to != lastOfPrev.Format("2006-01-02") {
+		t.Errorf("上月范围错误: %s ~ %s, 期望 %s ~ %s", from, to, firstOfPrev.Format("2006-01-02"), lastOfPrev.Format("2006-01-02"))
+	}
+}
+
+// TestParseTimeRange_Year 今年/去年
+func TestParseTimeRange_Year(t *testing.T) {
+	now := time.Now()
+	from, _, granularity := parseTimeRange("今年的销售情况如何？")
+	if from != time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02") || granularity != "month" {
+		t.Errorf("今年范围错误: %s (%s)", from, granularity)
+	}
+	from2, to2, _ := parseTimeRange("去年对比今年怎么样")
+	lastYear := time.Date(now.Year()-1, 1, 1, 0, 0, 0, 0, now.Location())
+	if from2 != lastYear.Format("2006-01-02") || to2 != lastYear.AddDate(0, 0, 364).Format("2006-01-02") {
+		t.Errorf("去年范围错误: %s ~ %s", from2, to2)
+	}
+}
+
+// TestParseTimeRange_RecentDays 近7天/近90天
+func TestParseTimeRange_RecentDays(t *testing.T) {
+	now := time.Now()
+	from, _, granularity := parseTimeRange("近7天卖了多少？")
+	if granularity != "day" {
+		t.Errorf("近7天应为日粒度, got %s", granularity)
+	}
+	if from != now.AddDate(0, 0, -6).Format("2006-01-02") {
+		t.Errorf("近7天起点错误: %s", from)
+	}
+	from90, _, granularity := parseTimeRange("近90天趋势")
+	if granularity != "month" || from90 != now.AddDate(0, 0, -89).Format("2006-01-02") {
+		t.Errorf("近90天范围错误: %s (%s)", from90, granularity)
+	}
+}
+
+// TestParseTimeRange_Default 无时间词默认近30天
+func TestParseTimeRange_Default(t *testing.T) {
+	now := time.Now()
+	from, to, granularity := parseTimeRange("分析一下业绩")
+	if granularity != "day" {
+		t.Errorf("默认应为日粒度, got %s", granularity)
+	}
+	if from != now.AddDate(0, 0, -29).Format("2006-01-02") || to != now.Format("2006-01-02") {
+		t.Errorf("默认范围错误: %s ~ %s", from, to)
+	}
+}
+
+// TestParseTimeRange_ThisMonth 本月（含"这个月"）
+func TestParseTimeRange_ThisMonth(t *testing.T) {
+	now := time.Now()
+	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+	from, to, granularity := parseTimeRange("这个月生意怎么样")
+	if granularity != "month" || from != firstOfMonth || to != now.Format("2006-01-02") {
+		t.Errorf("本月范围错误: %s ~ %s (%s)", from, to, granularity)
 	}
 }
 

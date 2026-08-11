@@ -45,13 +45,15 @@
 - 2026-08-11：后端 M1 完成（配置/LLM客户端/Service/API/路由/权限 SQL），13 个单测 + go vet 通过
 - 2026-08-11：前端 M2 完成（SSE 封装/对话组件/看板+收银台入口），vite build 通过
 - 2026-08-11：文档（docs/11 + 配置说明）与记忆登记完成
+- 2026-08-11：权限注册回归 SQL 脚本（评审决策），本机已执行 ai-register.sql 验证就位
+- 2026-08-11：修复 SSE 事件格式 bug（event: data 误带导致前端无输出），新增 SSE 格式单测
+- 2026-08-11：方案 A 实施——AnalyzeSales 注入历史统计（时间词解析：上月/今年/去年/近7天/近90天等 → 目标范围聚合 + 近90天按月走势）；看板历史统计选择器升级（年/月/日三级 + 右端点禁未来）；方案 B（AI 只读工具 function calling）写入 docs/11 待二期
 
 ## 后续待办
 
-- [ ] 执行 `docs/sql/ai-register.sql`（权限初始化，需连真实 MySQL）
-- [ ] 配置 DeepSeek API Key（config.yaml 或环境变量）
-- [ ] 联调验收（M3）：真实 API 跑通分析流式 + 推荐加购；权限 403 验证；prompt injection 拒绝验证
+- [ ] 联调验收（M3）：真实 API 跑通「上个月卖得怎么样」等历史问题；看板年/月/日选择器；权限 403 验证；prompt injection 拒绝验证
 - [ ] 收尾：`feature/jxc-ai-assistant` 合并 develop
+- [ ] 二期（方案 B）：AI 只读工具 function calling（见 docs/11）
 
 ## 更新规则
 
