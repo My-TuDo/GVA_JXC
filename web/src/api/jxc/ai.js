@@ -135,6 +135,8 @@ const aiSSERequest = async (url, data, options = {}) => {
             }
           }
           dispatch(pendingEvent, payload)
+          // SSE 规范：event: 行只作用于紧随的一个 data 行，事件结束后重置为默认 message
+          pendingEvent = 'message'
         }
       }
     }
@@ -157,6 +159,7 @@ const aiSSERequest = async (url, data, options = {}) => {
             }
           }
           dispatch(pendingEvent, payload)
+          pendingEvent = 'message'
         }
       }
     }
