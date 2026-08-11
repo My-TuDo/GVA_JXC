@@ -88,6 +88,8 @@ const aiSSERequest = async (url, data, options = {}) => {
     let done = false
 
     const dispatch = (eventName, payload) => {
+      // 容错：无 event 行的文本流在部分实现里可能被标成 'data'，归一为 message
+      if (eventName === 'data') eventName = 'message'
       if (eventName === 'error') {
         throw new Error(
           (typeof payload === 'object' && (payload.msg || payload.message)) ||

@@ -85,7 +85,7 @@ func (a *AiApi) Recommend(c *gin.Context) {
 	if err != nil {
 		global.GVA_LOG.Error("AI 推荐语生成失败!", zap.Error(err))
 		writeSSE(c, "error", err.Error())
-		writeSSE(c, "data", "[DONE]")
+		writeSSE(c, "", "[DONE]")
 		return
 	}
 	forwardLLMStream(c, resp)
@@ -133,8 +133,9 @@ func forwardLLMStream(c *gin.Context, resp *http.Response) {
 			continue
 		}
 		if len(chunk.Choices) > 0 && chunk.Choices[0].Delta.Content != "" {
-			writeSSE(c, "data", chunk.Choices[0].Delta.Content)
+			// 文本增量用默认 message 事件（不写 event 行，避免被识别为命名事件）
+			writeSSE(c, "", chunk.Choices[0].Delta.Content)
 		}
 	}
-	writeSSE(c, "data", "[DONE]")
+	writeSSE(c, "", "[DONE]")
 }
