@@ -109,7 +109,7 @@ func TestPeriod_CloseAndFreeze(t *testing.T) {
 	ls := new(LedgerService)
 	ctx := context.Background()
 
-	ym := time.Now().Format("2006-01")
+	ym := time.Now().In(jxcLocation).Format("2006-01")
 	period, err := ps.Close(ctx, ym, "tester")
 	if err != nil {
 		t.Fatalf("结账失败: %v", err)

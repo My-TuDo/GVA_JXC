@@ -18,7 +18,7 @@ func TestPurchaseReturnReversal_ExcludedFromAggregates(t *testing.T) {
 	periods := NewPeriodService()
 	ds := NewDashboardService()
 	ctx := context.Background()
-	now := time.Now()
+	now := time.Now().In(jxcLocation)
 
 	po, err := ps.Create(ctx, &jxc.PurchaseOrder{WarehouseID: wh,
 		Items: []jxc.PurchaseItem{{SkuID: sku, Qty: 10, UnitCost: 5}}})

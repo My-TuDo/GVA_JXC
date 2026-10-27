@@ -86,12 +86,12 @@ func TestDocumentSearch_Purchase(t *testing.T) {
 	}
 
 	// 日期范围：明天开始应为 0；今天应为 2
-	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	tomorrow := time.Now().In(jxcLocation).AddDate(0, 0, 1).Format("2006-01-02")
 	_, total = search(jxcReq.DocumentSearch{PageInfo: common.PageInfo{Page: 1, PageSize: 20}, StartAt: tomorrow, EndAt: tomorrow})
 	if total != 0 {
 		t.Errorf("明天没有单据，实际 total=%d", total)
 	}
-	today := time.Now().Format("2006-01-02")
+	today := time.Now().In(jxcLocation).Format("2006-01-02")
 	_, total = search(jxcReq.DocumentSearch{PageInfo: common.PageInfo{Page: 1, PageSize: 20}, StartAt: today, EndAt: today})
 	if total != 2 {
 		t.Errorf("今天的单据应有 2 条，实际 %d", total)

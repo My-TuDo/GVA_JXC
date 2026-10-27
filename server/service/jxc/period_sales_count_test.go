@@ -31,7 +31,7 @@ func TestPeriod_SalesOrdersReversed(t *testing.T) {
 		t.Fatalf("红冲失败: %v", err)
 	}
 
-	sum, err := periods.Summary(ctx, time.Now().Format("2006-01"))
+	sum, err := periods.Summary(ctx, time.Now().In(jxcLocation).Format("2006-01"))
 	if err != nil {
 		t.Fatalf("月报失败: %v", err)
 	}

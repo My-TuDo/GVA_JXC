@@ -57,7 +57,7 @@ func TestDashboard_Summary(t *testing.T) {
 	}
 
 	ds := NewDashboardService()
-	today := time.Now().Format("2006-01-02")
+	today := time.Now().In(jxcLocation).Format("2006-01-02")
 	got, err := ds.Summary(ctx, today)
 	if err != nil {
 		t.Fatalf("工作台汇总失败: %v", err)

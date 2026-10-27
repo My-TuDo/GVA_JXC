@@ -30,7 +30,7 @@ func TestDashboard_ReversalNetsToday(t *testing.T) {
 		t.Fatalf("红冲失败: %v", err)
 	}
 
-	got, err := ds.Summary(ctx, time.Now().Format("2006-01-02"))
+	got, err := ds.Summary(ctx, time.Now().In(jxcLocation).Format("2006-01-02"))
 	if err != nil {
 		t.Fatalf("工作台汇总失败: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestDashboard_PurchaseReturnNetsToday(t *testing.T) {
 		t.Fatalf("采购退货出库失败: %v", err)
 	}
 
-	got, err := ds.Summary(ctx, time.Now().Format("2006-01-02"))
+	got, err := ds.Summary(ctx, time.Now().In(jxcLocation).Format("2006-01-02"))
 	if err != nil {
 		t.Fatalf("工作台汇总失败: %v", err)
 	}
