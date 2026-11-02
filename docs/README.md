@@ -46,6 +46,13 @@
 | `scripts/seed-demo.py` | 演示数据（可反复重建） |
 | `scripts/e2e-smoke.py` | 端到端冒烟：采购→销售→退货→盘点→红冲→对账→月报 |
 
+## 上游资料
+
+| 文档 | 内容 |
+|---|---|
+| [upstream/README.md](upstream/README.md) | Gin-Vue-Admin 原始中文 README（归档，版权与授权归上游） |
+| [upstream/README-en.md](upstream/README-en.md) | Gin-Vue-Admin 原始英文 README（归档） |
+
 ## 阅读顺序建议
 
 第一次接触：`18` → `19` → `16` → `20`。
