@@ -32,8 +32,20 @@ func NewReversalService() *ReversalService {
 	return &ReversalService{ledger: new(LedgerService)}
 }
 
-// Reverse 对一张采购单/销售单/采购退货单做整单红冲。
+// Reverse 对一张采购单/销售单/采购退货单做整单红冲，记账时间为当前时间。
 func (s *ReversalService) Reverse(ctx context.Context, sourceType string, sourceID uint, reason, operator string) (*jxc.StockReversal, error) {
+	return s.ReverseAt(ctx, sourceType, sourceID, reason, operator, time.Now())
+}
+
+// ReverseAt 与 Reverse 相同，但允许指定红冲记账时间；用于测试和补录场景。
+func (s *ReversalService) ReverseAt(ctx context.Context, sourceType string, sourceID uint, reason, operator string, postedAt time.Time) (*jxc.StockReversal, error) {
+	if postedAt.IsZero() {
+		postedAt = time.Now()
+	}
+	return s.reverseAt(ctx, sourceType, sourceID, reason, operator, postedAt)
+}
+
+func (s *ReversalService) reverseAt(ctx context.Context, sourceType string, sourceID uint, reason, operator string, postedAt time.Time) (*jxc.StockReversal, error) {
 	if sourceID == 0 {
 		return nil, errors.New("请选择要红冲的单据")
 	}
@@ -158,7 +170,7 @@ func (s *ReversalService) Reverse(ctx context.Context, sourceType string, source
 		rev = &jxc.StockReversal{
 			ReversalNo: no, SourceType: sourceType, SourceID: docID, SourceNo: docNo,
 			Reason: reason, Amount: amtSum.Yuan(), Qty: qtySum,
-			Status: jxc.ReversalPosted, PostedAt: time.Now(), Operator: operator,
+			Status: jxc.ReversalPosted, PostedAt: postedAt, Operator: operator,
 		}
 		if err := tx.Create(rev).Error; err != nil {
 			return err

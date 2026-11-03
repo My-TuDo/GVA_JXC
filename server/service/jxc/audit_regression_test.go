@@ -307,7 +307,8 @@ func TestPeriod_ReversalHitsReversalMonth(t *testing.T) {
 	if err := ss.Ship(ctx, so.ID, "t", sep); err != nil {
 		t.Fatalf("9 月出库失败: %v", err)
 	}
-	if _, err := rs.Reverse(ctx, jxc.ReversalSourceSale, so.ID, "录错了", "t"); err != nil {
+	oct := time.Date(2026, 10, 15, 10, 0, 0, 0, time.Local)
+	if _, err := rs.ReverseAt(ctx, jxc.ReversalSourceSale, so.ID, "录错了", "t", oct); err != nil {
 		t.Fatalf("红冲失败: %v", err)
 	}
 
