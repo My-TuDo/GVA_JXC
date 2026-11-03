@@ -445,7 +445,11 @@ git clone https://github.com/My-TuDo/JXC.git
 cd JXC
 ```
 
-2. 配置 `server/config.yaml`，首次启动把 `mysql.db-name` 留空：
+2. 复制示例配置，首次启动把 `mysql.db-name` 留空（`server/config.yaml` 已被 .gitignore 忽略，不要提交真实密码/密钥）：
+
+```bash
+cp server/config.example.yaml server/config.yaml
+```
 
 ```yaml
 mysql:
@@ -471,7 +475,7 @@ curl -X POST http://127.0.0.1:8888/init/checkdb
 curl -X POST http://127.0.0.1:8888/init/initdb -H 'Content-Type: application/json' -d '{"adminPassword":"Admin@123456","dbType":"mysql","host":"127.0.0.1","port":"3306","userName":"root","password":"你的密码","dbName":"erp_v3"}'
 ```
 
-初始化会建库、建表、写入管理员，并把 `db-name` 回写到 `config.yaml`。**重启后端**切换到新库。
+初始化会建库、建表、写入管理员，并把 `db-name` 回写到 `server/config.yaml`。**重启后端**切换到新库。
 
 > 为什么必须先留空：`/init/checkdb` 的判定是“能不能连上库”，不是“库里有没有数据”。指向一个已存在的空库时它会说“无需初始化”，结果是表齐了但没有账号。
 
@@ -585,7 +589,7 @@ npm run build
 
 ### 8.2 生产化前必须做（P0）
 
-- `server/config.yaml` 脱跟踪，补 `config.yaml.example`，全历史扫描并轮换真实密钥；
+- 生产部署前确认 `server/config.yaml` 未被提交（仓库只提供 `server/config.example.yaml`）；
 - 反向代理封禁 `/init/*`，关闭公开注册，验证码保持开启；
 - 依赖与 CI 门禁：`npm ci`、`go test`、secret scanning、分支保护。
 

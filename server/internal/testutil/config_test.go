@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// chdirToServer 把测试工作目录切到 server/，使相对路径 config.yaml 可用。
+// chdirToServer 把测试工作目录切到 server/，使相对路径 config.yaml / config.example.yaml 可用。
 // LoadDefaultTestConfig 与 core.getConfigPath() 的设计假设运行目录是 server/，
 // 但 go test 默认在包目录（server/internal/testutil/）运行，需要切换。
 // 还原在 t.Cleanup 中完成。
@@ -30,7 +30,7 @@ func chdirToServer(t *testing.T) {
 	t.Cleanup(func() { _ = os.Chdir(wd) })
 }
 
-// TestLoadConfig_LoadsConfigYAML 用仓库自带的 server/config.yaml 验证加载。
+// TestLoadConfig_LoadsConfigYAML 用本地 config.yaml（若有）或仓库自带的 config.example.yaml 验证加载。
 func TestLoadConfig_LoadsConfigYAML(t *testing.T) {
 	old := global.GVA_CONFIG
 	t.Cleanup(func() {
@@ -39,7 +39,11 @@ func TestLoadConfig_LoadsConfigYAML(t *testing.T) {
 	})
 
 	chdirToServer(t)
-	v := LoadConfig(t, "config.yaml")
+	path := "config.yaml"
+	if _, err := os.Stat(path); err != nil {
+		path = "config.example.yaml"
+	}
+	v := LoadConfig(t, path)
 	if v == nil {
 		t.Fatal("LoadConfig 返回 nil")
 	}

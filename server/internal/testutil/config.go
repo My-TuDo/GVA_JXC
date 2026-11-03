@@ -16,6 +16,7 @@ const (
 	configEnv         = "GVA_CONFIG"
 	configDefaultFile = "config.yaml"
 	configTestFile    = "config.test.yaml"
+	configExampleFile = "config.example.yaml"
 )
 
 // LoadConfig 自建 viper 实例读取指定 yaml 文件，并 Unmarshal 到 global.GVA_CONFIG。
@@ -60,10 +61,11 @@ func LoadConfig(t testing.TB, path string) *viper.Viper {
 //
 //  1. 环境变量 GVA_CONFIG 指定的路径
 //  2. config.test.yaml（若存在）
-//  3. config.yaml（兜底）
+//  3. config.yaml（本地配置，不入库）
+//  4. config.example.yaml（CI/干净 clone 的兜底）
 //
 // 与 core.getConfigPath() 的优先级保持一致，但不会因为 TestMode 文件不存在
-// 而 panic——直接回退到 config.yaml。
+// 而 panic——依次回退到 config.yaml / config.example.yaml。
 //
 // 用法：
 //
@@ -81,7 +83,7 @@ func LoadDefaultTestConfig(t testing.TB) *viper.Viper {
 	if env := os.Getenv(configEnv); env != "" {
 		candidates = append(candidates, env)
 	}
-	candidates = append(candidates, configTestFile, configDefaultFile)
+	candidates = append(candidates, configTestFile, configDefaultFile, configExampleFile)
 
 	for _, p := range candidates {
 		if _, err := os.Stat(p); err == nil {

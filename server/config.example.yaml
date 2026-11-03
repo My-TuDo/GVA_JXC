@@ -1,3 +1,6 @@
+# 示例配置：复制为 config.yaml 后填写本地值。
+# config.yaml 已被 .gitignore 忽略，不要提交真实密码/密钥。
+
 # github.com/flipped-aurora/gin-vue-admin/server Global Configuration
 
 # jwt configuration

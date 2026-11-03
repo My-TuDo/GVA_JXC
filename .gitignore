@@ -31,6 +31,8 @@ rm_file/
 /server/latest_log
 /server/__debug_bin*
 /server/*.local.yaml
+# 本地服务配置（含真实密码/JWT 密钥），仓库只保留 config.example.yaml
+/server/config.yaml
 /server/.gva-build/
 server/uploads/
 

@@ -9,14 +9,19 @@ import (
 )
 
 func TestShippedServerConfigsMatchSchema(t *testing.T) {
-	tests := []struct {
+	type configCase struct {
 		name       string
 		path       string
 		kubernetes bool
-	}{
-		{name: "default", path: "../config.yaml"},
+	}
+	tests := []configCase{
+		{name: "example", path: "../config.example.yaml"},
 		{name: "docker", path: "../config.docker.yaml"},
 		{name: "kubernetes", path: "../../deploy/kubernetes/server/gva-server-configmap.yaml", kubernetes: true},
+	}
+	// 本地开发可以额外校验自己的 config.yaml；该文件不入库，CI 里不存在。
+	if _, err := os.Stat("../config.yaml"); err == nil {
+		tests = append(tests, configCase{name: "local", path: "../config.yaml"})
 	}
 
 	for _, tt := range tests {
