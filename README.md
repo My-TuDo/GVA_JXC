@@ -441,8 +441,8 @@ JXC/
 1. 克隆仓库：
 
 ```bash
-git clone https://github.com/My-TuDo/JXC.git
-cd JXC
+git clone https://github.com/My-TuDo/GVA_JXC.git
+cd GVA_JXC
 ```
 
 2. 复制示例配置，首次启动把 `mysql.db-name` 留空（`server/config.yaml` 已被 .gitignore 忽略，不要提交真实密码/密钥）：
