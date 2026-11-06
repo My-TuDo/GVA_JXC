@@ -63,7 +63,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.0",
-    "@babel/eslint-parser": "^7.25.1",
+    "@babel/eslint-parser": "^8.0.7",
     "@babel/preset-env": "^7.25.0",
     "@eslint/js": "^8.56.0",
     "@unocss/extractor-svelte": "^66.4.2",
