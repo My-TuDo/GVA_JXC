@@ -6,6 +6,8 @@
 # local env files
 .env.local
 .env.*.local
+# docker-compose 的本地凭据（只提交 .env.example）
+/deploy/docker-compose/.env
 
 # 本地私密工作区: AI 点触测试 token 等本机凭证, 永不入库(见 aiDoc/frontend-backend/page-click-testing.md)
 /.local/
