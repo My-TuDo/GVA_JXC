@@ -9,6 +9,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/system/request"
 	"gorm.io/gorm"
 	"sort"
+	"strings"
 )
 
 // dbReadyCallback 数据库就绪回调函数，由 initialize 包注入
@@ -96,6 +97,14 @@ type InitDBService struct{}
 
 // InitDB 创建数据库并初始化 总入口
 func (initDBService *InitDBService) InitDB(conf request.InitDB) (err error) {
+	// 初始化接口是公开的（只在 debug/显式开启时注册），管理员口令必须由调用方指定，
+	// 不再回退到历史上的默认值 "123456"。
+	if strings.TrimSpace(conf.AdminPassword) == "" {
+		return errors.New("管理员密码不能为空")
+	}
+	if len([]rune(conf.AdminPassword)) < 8 {
+		return errors.New("管理员密码至少 8 位")
+	}
 	ctx := context.TODO()
 	ctx = context.WithValue(ctx, "adminPassword", conf.AdminPassword)
 	if len(initializers) == 0 {
