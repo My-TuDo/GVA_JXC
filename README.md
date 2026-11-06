@@ -625,7 +625,7 @@ npm run build
 
 ## 10. 参与开发
 
-- 当前开发分支：`rewrite/jxc-v3`，功能分支请从它切出；
+- 当前开发分支：`main`，功能分支请从 `main` 切出，合入后清理；
 - 提交信息建议使用语义化格式：`type(scope): description`，例如 `feat(jxc): 增加采购退货查询筛选`；
 - 改动账务逻辑必须补测试，至少覆盖：正常过账、重复过账、库存不足、期间已结账、红冲/退货边界；
 - 涉及金额与库存的改动，先跑 `go test ./service/jxc ./internal/ledger -count=1`；
