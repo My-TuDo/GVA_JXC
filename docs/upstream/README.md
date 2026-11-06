@@ -1,3 +1,5 @@
+> **说明（2026-11）**：本文件是上游 README 的历史快照，正文保留原样。上游已于 2026-09-04 把许可证从 BSL 1.1 改回 Apache-2.0；本仓库许可证以根目录 [LICENSE](../../LICENSE) 为准。
+
 <div align="center">
   <img src="http://qmplusimg.henrongyi.top/gvalogo.jpg" width="300" height="300" />
 </div>
