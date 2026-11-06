@@ -14,7 +14,7 @@
   <img alt="Vite" src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white" />
   <img alt="Element Plus" src="https://img.shields.io/badge/Element%20Plus-2.13-409EFF" />
   <img alt="UnoCSS" src="https://img.shields.io/badge/UnoCSS-66-333333" />
-  <img alt="License" src="https://img.shields.io/badge/License-BSL%201.1-orange" />
+  <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue" />
 </p>
 
 </div>
@@ -637,11 +637,11 @@ npm run build
 
 ### 11.1 许可证
 
-本仓库沿用上游 **Business Source License 1.1（BSL 1.1）**，详见 [LICENSE](LICENSE)。
+本仓库遵循上游 **Apache License 2.0**，详见 [LICENSE](LICENSE)。
 
-- 个人使用、评估/开发、教育用途在 Additional Use Grant 允许范围内可免费使用；
-- 商用、生产部署、对外提供服务或移除版权/署名信息，需要获得商业授权；
-- 请保留仓库、日志与界面中的版权声明。
+- 可自由使用、修改、分发，包括商业用途，但须保留版权、许可与署名声明；
+- 请保留仓库、日志与界面中的版权声明；
+- 授权版功能与官方商业支持需另行购买，参见 [Gin-Vue-Admin 商业授权](https://plugin.gin-vue-admin.com/license)。
 
 > 本项目主要面向学习与演示，不构成任何生产可用性或财务合规承诺。
 
