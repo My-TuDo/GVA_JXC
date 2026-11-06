@@ -58,6 +58,10 @@ data:
       use-multipoint: false
       use-redis: false
       use-mongo: false
+      # 生产环境关闭初始化接口与 swagger：前者能指定任意库并建管理员，
+      # 后者会暴露全部接口契约。确实需要时临时改为 true 并在用完后关闭。
+      init-db-enable: false
+      swagger-enable: false
 
     # mysql connect configuration
     # 未初始化之前请勿手动修改数据库信息！！！如果一定要手动初始化请看（https://www.github.com/flipped-aurora/gin-vue-admin/server.com/docs/first）
