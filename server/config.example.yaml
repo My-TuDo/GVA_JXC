@@ -98,6 +98,12 @@ system:
     use-strict-auth: false
     #  禁用自动迁移数据库表结构，生产环境建议设为true，手动迁移
     disable-auto-migrate: false
+    #  初始化接口 (/init/initdb、/init/checkdb) 开关。
+    #  不配置 = 按 gin 模式取默认值：debug 开、release 关。
+    #  该接口能指定任意数据库并创建管理员，生产环境保持关闭。
+    #  init-db-enable: false
+    #  swagger 文档 (/swagger/*any) 开关。不配置 = debug 开、release 关。
+    #  swagger-enable: false
 
 # mysql connect configuration
 # 未初始化之前请勿手动修改数据库信息！！！如果一定要手动初始化请看（https://gin-vue-admin.com/docs/first_master）

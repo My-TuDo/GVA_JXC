@@ -86,6 +86,11 @@ system:
     router-prefix: ""
     #  严格角色模式 打开后权限将会存在上下级关系
     use-strict-auth: false
+    #  容器首次启动依赖 /init/initdb 把数据库配置写回本文件，故显式开启；
+    #  初始化完成后请改为 false 并重启容器。
+    init-db-enable: true
+    #  容器对外提供服务，不暴露 swagger 接口文档
+    swagger-enable: false
 
 # mysql connect configuration
 # 未初始化之前请勿手动修改数据库信息！！！如果一定要手动初始化请看（https://gin-vue-admin.com/docs/first_master）

@@ -57,12 +57,13 @@ services:
     ports:
       - "13306:3306"  # host物理直接映射端口为13306
     environment:
-      #MYSQL_ROOT_PASSWORD: 'Aa@6447985' # root管理员用户密码
-      MYSQL_DATABASE: 'qmPlus' # 初始化启动时要创建的数据库的名称
-      MYSQL_USER: 'gva'
-      MYSQL_PASSWORD: 'Aa@6447985'
+      # 凭据来自同目录 .env（复制 .env.example 后修改），不再写死演示密码
+      MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD:?请先复制 deploy/docker-compose/.env.example 为 .env 并设置 MYSQL_ROOT_PASSWORD}'
+      MYSQL_DATABASE: '${MYSQL_DATABASE:-qmPlus}' # 初始化启动时要创建的数据库的名称
+      MYSQL_USER: '${MYSQL_USER:-gva}'
+      MYSQL_PASSWORD: '${MYSQL_PASSWORD:?请先复制 deploy/docker-compose/.env.example 为 .env 并设置 MYSQL_PASSWORD}'
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "gva", "-pAa@6447985"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u \"$${MYSQL_USER}\" -p\"$${MYSQL_PASSWORD}\" --silent"]
       interval: 10s
       timeout: 5s
       retries: 3

@@ -63,8 +63,13 @@ func Routers() *gin.Engine {
 	// Router.Use(middleware.Cors()) // 直接放行全部跨域请求
 	// Router.Use(middleware.CorsByRules()) // 按照配置的规则放行跨域请求
 	docs.SwaggerInfo.BasePath = global.GVA_CONFIG.System.RouterPrefix
-	Router.GET(global.GVA_CONFIG.System.RouterPrefix+"/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	logger.Bg().Mod("system").Info("register swagger handler")
+	// swagger 文档未显式配置时 debug 开、release 关，避免生产环境暴露接口契约
+	if global.GVA_CONFIG.System.SwaggerEnabled(gin.Mode() == gin.ReleaseMode) {
+		Router.GET(global.GVA_CONFIG.System.RouterPrefix+"/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+		logger.Bg().Mod("system").Info("register swagger handler")
+	} else {
+		logger.Bg().Mod("system").Info("swagger handler disabled by config/mode")
+	}
 	// 方便统一添加路由组前缀 多服务器上线使用
 
 	PublicGroup := Router.Group(global.GVA_CONFIG.System.RouterPrefix)
@@ -80,7 +85,13 @@ func Routers() *gin.Engine {
 	}
 	{
 		systemRouter.InitBaseRouter(PublicGroup) // 注册基础功能路由 不做鉴权
-		systemRouter.InitInitRouter(PublicGroup) // 自动初始化相关
+		// 初始化接口同样未显式配置时 debug 开、release 关：
+		// 它能指定任意数据库并创建管理员，生产环境必须默认关闭。
+		if global.GVA_CONFIG.System.InitDBEnabled(gin.Mode() == gin.ReleaseMode) {
+			systemRouter.InitInitRouter(PublicGroup)
+		} else {
+			logger.Bg().Mod("system").Info("init db routes disabled by config/mode")
+		}
 	}
 
 	{
