@@ -50,7 +50,7 @@
     "tailwind-merge": "^3.6.0",
     "universal-cookie": "^7",
     "vform3-builds": "^3.0.10",
-    "vue": "^3.5.31",
+    "vue": "^3.5.46",
     "vue-cropper": "^1.1.4",
     "vue-echarts": "^7.0.3",
     "vue-qr": "^4.0.9",
