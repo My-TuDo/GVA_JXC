@@ -41,7 +41,7 @@
     "marked-highlight": "^2.1.4",
     "mitt": "^3.0.1",
     "nprogress": "^0.2.0",
-    "pinia": "^2.2.2",
+    "pinia": "^4.1.0",
     "qs": "^6.13.0",
     "reka-ui": "^2.10.0",
     "screenfull": "^6.0.2",
