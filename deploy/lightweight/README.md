@@ -13,10 +13,17 @@
 | `my.cnf` | 1.8G 内存下的 MySQL 调优 |
 | `sql/jxc-demo-roles.sql` | 9001/9002/9003 角色行（幂等） |
 
+> **不要在服务器上 clone 仓库再构建**：1.8G 内存跑不动 `go build` / `vite build`，
+> 且 `dist/` 产物被 `.gitignore` 排除，clone 下来也拿不到二进制，仍要单独传输。
+> 服务器只接收产物与下列脚本，见下文 scp。
+
 快速开始：
 
 ```bash
+# 本地（Windows 用 Git Bash / WSL）
 bash deploy/lightweight/build.sh
 scp -r deploy/lightweight root@<IP>:/tmp/
+scp server/config.example.yaml root@<IP>:/tmp/
+scp docs/sql/jxc-casbin.sql scripts/seed-demo.py root@<IP>:/tmp/
 ssh root@<IP> 'cd /tmp/lightweight && JXC_DB_PASSWORD=<密码> bash server-setup.sh'
 ```

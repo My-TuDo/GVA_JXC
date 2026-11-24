@@ -58,6 +58,8 @@ worktrees/
 /.reasonix/
 /.zcode/
 *.exe~
+# 部署构建产物（build.sh 生成，含 70MB+ 二进制，勿入库）
+/deploy/lightweight/dist/
 
 # 编辑器/工具写入时产生的临时目录（vite 监视器碰到会 EBUSY 崩溃）
 *.tmpdir/
