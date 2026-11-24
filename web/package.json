@@ -31,7 +31,7 @@
     "@wangeditor/editor-for-vue": "^5.1.12",
     "ace-builds": "^1.36.4",
     "arcdash": "^0.0.60",
-    "axios": "1.8.2",
+    "axios": "1.21.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "echarts": "5.5.1",
