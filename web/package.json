@@ -50,8 +50,6 @@
     "tailwind-merge": "^3.6.0",
     "universal-cookie": "^7",
     "vform3-builds": "^3.0.10",
-    "vite-auto-import-svg": "^2.9.4",
-    "vite-vue-path-map": "^1.0.0",
     "vue": "^3.5.31",
     "vue-cropper": "^1.1.4",
     "vue-echarts": "^7.0.3",
@@ -80,7 +78,6 @@
     "globals": "^16.3.0",
     "sass": "^1.78.0",
     "vite": "^8.0.10",
-    "vite-check-multiple-dom": "0.2.1",
     "vite-plugin-banner": "^0.8.0",
     "vite-plugin-vue-devtools": "^8.1.1",
     "vue-eslint-parser": "^9.4.3"

@@ -1,2 +1,8 @@
 *.sql linguist-language=GO
 *.html linguist-language=GO
+
+# 部署脚本会被 scp 到 Linux 执行：必须保持 LF，否则 bash 报 "$'\r': command not found"
+*.sh text eol=lf
+deploy/lightweight/nginx-jxc.conf text eol=lf
+deploy/lightweight/jxc.service text eol=lf
+deploy/lightweight/my.cnf text eol=lf

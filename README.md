@@ -5,6 +5,8 @@
 <p><strong>基于 Gin-Vue-Admin 二次开发的单店进销存系统</strong><br/>
 库存不是一个数字，而是一串不可变的事实。</p>
 
+<p><strong>在线演示：<a href="https://td-b.xyz">https://td-b.xyz</a></strong></p>
+
 <p>
   <img alt="Go" src="https://img.shields.io/badge/Go-1.24-00ADD8?logo=go&logoColor=white" />
   <img alt="Gin" src="https://img.shields.io/badge/Gin-1.10-008ECF" />
@@ -21,7 +23,9 @@
 
 > 这是一个以**学习全栈开发与领域建模**为主要目的的进销存项目。后端 Go + Gin + GORM，前端 Vue 3 + Vite + Element Plus；登录、RBAC、Casbin、菜单、代码生成等基础设施来自 [Gin-Vue-Admin](https://github.com/flipped-aurora/gin-vue-admin)（v3.0.0），采购、销售、退货、红冲、盘点、库存账本、对账、月报与月结等业务为二次开发实现。
 >
-> **当前状态**：演示可用、持续完善中。尚未做生产级安全加固，部署到公网前请先阅读 [34-后端工作计划](docs/34-后端工作计划.md)。
+> **当前状态**：演示可用、持续完善中。P0 安全整改已完成主体（release 模式关闭 `/init` 与 Swagger、拒绝占位 JWT 密钥、CI 门禁与依赖扫描），公网部署步骤见 [35-服务器部署与演示](docs/35-服务器部署与演示.md)，剩余事项见 [34-后端工作计划](docs/34-后端工作计划.md)。
+>
+> **演示账号**：`demo_boss`（老板，JXC 全量）、`demo_manager`（店长）、`demo_clerk`（店员）、`demo_viewer`（只读），口令均为 `Demo@1234`；站内数据为虚构演示数据，可随意操作。
 
 ## 1. 项目简介
 
@@ -565,6 +569,7 @@ npm run build
 | [docs/21-接手审计](docs/21-接手审计.md) | 实际验证到的缺陷、已修项、剩余风险、文档与代码不一致清单 | 动手前先看 |
 | [docs/33-上线演示环境与验收](docs/33-上线演示环境与验收.md) | 演示库、账号、seed、重建步骤、验收清单与回滚 | 准备演示/上线 |
 | [docs/34-后端工作计划](docs/34-后端工作计划.md) | 演示后/生产化 roadmap：安全整改、反结账、聚合计数、多实例触发条件 | 上线前 |
+| [docs/35-服务器部署与演示](docs/35-服务器部署与演示.md) | 阿里云轻量部署：构建、初始化、演示账号、每周重置、备案后开放公网 | 要挂在公网演示 |
 | [docs/README.md](docs/README.md) | 全部文档索引 | 找文档 |
 | [AGENT.MD](AGENT.MD) | 项目级 AI 协作规则 | 用 AI 改代码 |
 | [aiDoc/README.md](aiDoc/README.md) | 结构化 AI 上下文：模块规则、前后端契约、示例与记忆 | 用 AI 改代码 |

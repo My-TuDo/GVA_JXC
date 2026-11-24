@@ -54,7 +54,9 @@
               </transition>
             </div>
           </router-view>
-          <BottomInfo />
+          <BottomInfo>
+            <SiteBeian />
+          </BottomInfo>
         </div>
       </div>
     </div>
@@ -70,6 +72,7 @@
   import useResponsive from '@/hooks/responsive'
   import GvaTabs from './tabs/index.vue'
   import BottomInfo from '@/components/bottomInfo/bottomInfo.vue'
+  import SiteBeian from '@/components/siteBeian/index.vue'
   import { emitter } from '@/utils/bus.js'
   import { computed, ref, onMounted, nextTick, reactive, watchEffect } from 'vue'
   import { useRouter, useRoute } from 'vue-router'

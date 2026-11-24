@@ -40,15 +40,39 @@
       </nav>
 
       <div class="shrink-0 border-t border-white/10 px-3 py-3">
-        <div class="flex items-center gap-2.5 rounded-md px-1.5 py-1.5">
-          <div class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/10 text-[11px] font-semibold text-white">
-            {{ userInitial }}
-          </div>
-          <div class="min-w-0 flex-1">
-            <div class="truncate text-[12px] text-white/85">{{ userName }}</div>
-            <div class="truncate text-[10px] text-[var(--jxc-rail-muted)]">{{ authorityName }}</div>
-          </div>
-        </div>
+        <!-- 用户区：点击展开操作面板（退出登录） -->
+        <el-popover
+          placement="top-start"
+          trigger="click"
+          :width="176"
+          popper-class="jxc-user-popover"
+        >
+          <template #reference>
+            <button
+              type="button"
+              class="flex w-full items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-white/10"
+              title="账户操作"
+            >
+              <div class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/10 text-[11px] font-semibold text-white">
+                {{ userInitial }}
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="truncate text-[12px] text-white/85">{{ userName }}</div>
+                <div class="truncate text-[10px] text-[var(--jxc-rail-muted)]">{{ authorityName }}</div>
+              </div>
+              <svg-icon icon="lucide:chevron-up" class="h-3.5 w-3.5 shrink-0 text-white/40" />
+            </button>
+          </template>
+
+          <button
+            type="button"
+            class="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] font-medium text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
+            @click="handleLogout"
+          >
+            <svg-icon icon="lucide:log-out" class="h-4 w-4 shrink-0" />
+            <span>退出登录</span>
+          </button>
+        </el-popover>
         <button
           v-if="isAdmin"
           type="button"
@@ -100,6 +124,11 @@
       <main class="min-h-0 flex-1 overflow-hidden bg-main px-6 py-5">
         <router-view />
       </main>
+
+      <!-- 备案信息：JXC 使用独立外壳，不经 GVA 的 BottomInfo，故在此单独展示 -->
+      <footer class="shrink-0 border-t border-border bg-container px-6 py-1.5">
+        <SiteBeian />
+      </footer>
     </div>
 
     <CommandPalette v-model="paletteOpen" :items="paletteItems" />
@@ -110,6 +139,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CommandPalette from '@/components/jxc/CommandPalette.vue'
+import SiteBeian from '@/components/siteBeian/index.vue'
 import { useUserStore } from '@/pinia/modules/user'
 import { isTypingTarget } from '@/view/jxc/shared/keyboard'
 import { ledgerReconcileLast } from '@/api/jxc'
@@ -164,6 +194,11 @@ const userName = computed(() => userStore.userInfo.nickName || userStore.userInf
 const authorityName = computed(() => userStore.userInfo.authority?.authorityName || '工作台用户')
 const isAdmin = computed(() => Number(userStore.userInfo.authority?.authorityId) === 888)
 const userInitial = computed(() => (userName.value || '管').slice(0, 1).toUpperCase())
+
+// 退出登录：复用 user store 的 LoginOut（拉黑 token、清缓存、跳登录页并 reload）
+const handleLogout = () => {
+  userStore.LoginOut()
+}
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || '')
 const commandKey = isMac ? '⌘K' : 'Ctrl K'
