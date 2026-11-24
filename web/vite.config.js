@@ -4,9 +4,7 @@ import * as path from 'path'
 import { loadEnv } from 'vite'
 import vuePlugin from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
-import VueFilePathPlugin from 'vite-vue-path-map'
-import { svgBuilder } from 'vite-auto-import-svg'
-import vueRootValidator from 'vite-check-multiple-dom'
+import { svgBuilder } from './vitePlugin/svgBuilder'
 import { AddSecret } from './vitePlugin/secret'
 import UnoCSS from '@unocss/vite'
 
@@ -87,11 +85,11 @@ export default ({ mode }) => {
       env.VITE_POSITION === 'open' &&
       vueDevTools({ launchEditor: env.VITE_EDITOR }),
       vuePlugin(),
-      svgBuilder(['./src/plugin/', './src/assets/icons/'], base, outDir, 'assets', mode),
+      svgBuilder(['./src/plugin/', './src/assets/icons/']),
       [Banner(`\n Build based on gin-vue-admin \n Time : ${timestamp}`)],
-      VueFilePathPlugin('./src/pathInfo.json'),
-      UnoCSS(),
-      vueRootValidator()
+      UnoCSS()
+      // 说明：vite-check-multiple-dom 在本地 SVG sprite 方案下会把 index.html 输出为空，
+      // 其职责仅限开发期「多根节点」提示与错误浮层，对生产构建无影响，故已移除。
     ]
   }
   return config
