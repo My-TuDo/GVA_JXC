@@ -105,6 +105,7 @@
               <img src="@/assets/github.png" class="footer-icon" alt="github" />
             </a>
           </div>
+          <SiteBeian />
         </BottomInfo>
       </div>
     </div>
@@ -115,6 +116,7 @@
   import { captcha } from '@/api/user'
   import { checkDB } from '@/api/initdb'
   import BottomInfo from '@/components/bottomInfo/bottomInfo.vue'
+  import SiteBeian from '@/components/siteBeian/index.vue'
   import { reactive, ref } from 'vue'
   import { ElMessage } from 'element-plus'
   import { useRouter } from 'vue-router'

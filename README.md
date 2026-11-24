@@ -5,6 +5,8 @@
 <p><strong>基于 Gin-Vue-Admin 二次开发的单店进销存系统</strong><br/>
 库存不是一个数字，而是一串不可变的事实。</p>
 
+<p><strong>在线演示：<a href="https://td-b.xyz">https://td-b.xyz</a></strong></p>
+
 <p>
   <img alt="Go" src="https://img.shields.io/badge/Go-1.24-00ADD8?logo=go&logoColor=white" />
   <img alt="Gin" src="https://img.shields.io/badge/Gin-1.10-008ECF" />
@@ -22,6 +24,8 @@
 > 这是一个以**学习全栈开发与领域建模**为主要目的的进销存项目。后端 Go + Gin + GORM，前端 Vue 3 + Vite + Element Plus；登录、RBAC、Casbin、菜单、代码生成等基础设施来自 [Gin-Vue-Admin](https://github.com/flipped-aurora/gin-vue-admin)（v3.0.0），采购、销售、退货、红冲、盘点、库存账本、对账、月报与月结等业务为二次开发实现。
 >
 > **当前状态**：演示可用、持续完善中。P0 安全整改已完成主体（release 模式关闭 `/init` 与 Swagger、拒绝占位 JWT 密钥、CI 门禁与依赖扫描），公网部署步骤见 [35-服务器部署与演示](docs/35-服务器部署与演示.md)，剩余事项见 [34-后端工作计划](docs/34-后端工作计划.md)。
+>
+> **演示账号**：`demo_boss`（老板，JXC 全量）、`demo_manager`（店长）、`demo_clerk`（店员）、`demo_viewer`（只读），口令均为 `Demo@1234`；站内数据为虚构演示数据，可随意操作。
 
 ## 1. 项目简介
 
